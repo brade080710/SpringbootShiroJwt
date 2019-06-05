@@ -11,4 +11,25 @@
     <result column="username" jdbcType="VARCHAR" property="username" />
     <result column="reg_time" jdbcType="TIMESTAMP" property="regTime" />
   </resultMap>
+
+  <select id="findInfoByUser" resultType="com.wang.model.UserPermission" parameterType="com.wang.model.UserDto">
+    SELECT
+    r.name as name,
+    p.per_code as per
+    FROM
+    user u
+    LEFT JOIN user_role ur ON u.id = ur.user_id
+    LEFT JOIN role r ON r.id = ur.role_id  LEFT JOIN role_permission rp on r.id = rp.role_id LEFT JOIN permission p on p.id = rp.permission_id
+
+    <where>
+      1 = 1
+      <if test="account != null and account != '' ">
+        AND u.account = #{account}
+      </if>
+      <if test="username != null and username != '' ">
+        AND u.username LIKE CONCAT('%',#{username},'%')
+      </if>
+    </where>
+  </select>
+
 </mapper>

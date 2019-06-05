@@ -2,6 +2,8 @@ package com.wang.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.wang.mapper.UserMapper;
+import com.wang.model.UserPermission;
 import com.wang.model.common.BaseDto;
 import com.wang.model.valid.group.UserEditValidGroup;
 import com.wang.model.valid.group.UserLoginValidGroup;
@@ -57,6 +59,8 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Autowired
+    public UserMapper userMapper;
     /**
      * 获取用户列表
      * @param 
@@ -66,12 +70,12 @@ public class UserController {
      */
     @GetMapping
     @RequiresPermissions(logical = Logical.AND, value = {"user:view"})
-    public ResponseBean user(@Validated BaseDto baseDto) {
-        if (baseDto.getPage() == null || baseDto.getRows() == null) {
-            baseDto.setPage(1);
-            baseDto.setRows(10);
-        }
-        PageHelper.startPage(baseDto.getPage(), baseDto.getRows());
+    public ResponseBean user(Integer page, Integer rows) {
+//        if (baseDto.getPage() == null || baseDto.getRows() == null) {
+//            baseDto.setPage(1);
+//            baseDto.setRows(10);
+//        }
+        PageHelper.startPage(page, rows);
         List<UserDto> userDtos = userService.selectAll();
         PageInfo<UserDto> selectPage = new PageInfo<UserDto>(userDtos);
         if (userDtos == null || userDtos.size() <= 0) {
@@ -202,6 +206,31 @@ public class UserController {
         // 获取当前登录用户Account
         String account = userUtil.getAccount();
         return new ResponseBean(HttpStatus.OK.value(), "您已经登录了(You are already logged in)", userDto);
+    }
+
+    /**
+     * 获取当前登录用户信息
+     * @param
+     * @return com.wang.model.common.ResponseBean
+     * @author Wang926454
+     * @date 2019/3/15 11:51
+     */
+    @GetMapping("/getInfo")
+    @RequiresAuthentication
+    public ResponseBean getinfo() {
+        // 获取当前登录用户
+        UserDto userDto = userUtil.getUser();
+        List <UserPermission> list = userMapper.findInfoByUser(userDto);
+        Map<String, String> map = new HashMap<>();
+        String role = "";
+        for(UserPermission userPermission : list) {
+            role += userPermission.getPer()+ ",";
+        }
+
+        map.put("name", list.get(0).getName());
+        map.put("roles", role.substring(0,role.lastIndexOf(",")));
+        map.put("avatar", "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif");
+        return new ResponseBean(HttpStatus.OK.value(), "您已经登录了(You are already logged in)", map);
     }
 
     /**
